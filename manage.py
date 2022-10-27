@@ -1,3 +1,4 @@
+from __future__ import annotations
 from selenium import webdriver
 from selenium.common import NoSuchElementException
 from selenium.webdriver.common.keys import Keys
@@ -27,7 +28,7 @@ class Sypter:
         # then add geckodriver to path
 
         firefox_options = Options()
-        # firefox_options.add_argument("--headless")
+        firefox_options.add_argument("--headless")
         self._driver = webdriver.Firefox(options=firefox_options)
         self._driver.implicitly_wait(10)
 
@@ -39,11 +40,11 @@ class Sypter:
         elif self.source_type == "html":
             self._driver.get(f"data:text/html;charset=utf-8,{source}")
 
-        self._driver.get(source)
 
     # შეიძლება ამის ცალკე გატანაც
     def _get_source_type(self, source):
         import re
+        source = source.strip()
         url_regex = re.compile(
             r'^(?:http|ftp)s?://'  # http:// or https://
             # domain...
@@ -117,8 +118,8 @@ class Sypter:
     def check_attribute_value(self, selenium_obj, **attributes) -> bool:
         pass
 
-    def __del__(self):
-        self._driver.close()
+    # def __del__(self):
+    #     self._driver.close()
 
     """
     3. გადაიყვანს HTML-ს სელენიუმის ობიექტად
@@ -135,8 +136,30 @@ class Sypter:
       assert check_attribute_value(user, style="color: red;")
     """
 
+    def check_attribute_value_by_css(self, css_selector, **attributes) -> bool:
+        element = self._driver.find_element(By.CSS_SELECTOR, css_selector)
+        for attribute, value in attributes.items():
+            attrs = element.get_attribute(attribute)
+            if element.get_attribute(attribute) != value:
+                return False
+        return True
+
+    # NOT TESTED YET
+    def check_if_attribute_exists_by_css(self, css_selector, attribute_name: str | tuple) -> bool:
+        element = self._driver.find_element(By.CSS_SELECTOR, css_selector)
+        if isinstance(attribute_name, tuple):
+            for attr in attribute_name:
+                if not element.get_attribute(attr):
+                    return False
+        else:
+            if not element.get_attribute(attribute_name):
+                return False
+        return True
 
 if __name__ == "__main__":
+    # Test 1
+    # URL as source
+
     # sypter = Sypter('https://www.w3schools.com/html/tryit.asp?filename=tryhtml_id_css')
     # print(sypter.if_exists_by_id("iframe"))
     #
@@ -154,24 +177,34 @@ if __name__ == "__main__":
     # # FALSE
     # print(sypter.if_exists_by_class("paragraph", number=1))
 
-    html = """
-        data:text/html;charset=utf-8,
-        <div class="post-signature owner flex--item">
-            <div class="user-info user-hover">
-            <div class="user-action-time">
-                asked <span title="2021-12-09 12:02:00Z" class="relativetime">38 mins ago</span>
-            </div>
-            <div class="user-gravatar32">
-                <a href="/users/4094231/umair-ayub"><div class="gravatar-wrapper-32"><img src="https://www.gravatar.com/avatar/da5d12e4b0c319022432a23fc5344831?s=64&amp;d=identicon&amp;r=PG&amp;f=1" alt="" width="32" height="32" class="bar-sm"></div></a>
-            </div>
-            <div class="user-details" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-                <a href="/users/4094231/umair-ayub">Umair Ayub</a><span class="d-none" itemprop="name">Umair Ayub</span>
-                <div class="-flair">
-                    <span class="reputation-score" title="reputation score 14,591" dir="ltr">14.6k</span><span title="12 gold badges" aria-hidden="true"><span class="badge1"></span><span class="badgecount">12</span></span><span class="v-visible-sr">12 gold badges</span><span title="61 silver badges" aria-hidden="true"><span class="badge2"></span><span class="badgecount">61</span></span><span class="v-visible-sr">61 silver badges</span><span title="131 bronze badges" aria-hidden="true"><span class="badge3"></span><span class="badgecount">131</span></span><span class="v-visible-sr">131 bronze badges</span>
-                </div>
-            </div>
-        </div>
-        </div>
-    """
+    # Test 2
+    # Test string as source
 
-    Sypter(html)
+    # html = """
+    #     <div class="post-signature owner flex--item">
+    #         <div class="user-info user-hover">
+    #         <div class="user-action-time">
+    #             asked <span title="2021-12-09 12:02:00Z" class="relativity">38 mins ago</span>
+    #         </div>
+    #         <div class="user-gravatar32">
+    #             <a href="/users/4094231/umair-ayub"><div class="gravatar-wrapper-32"><img src="https://www.gravatar.com/avatar/da5d12e4b0c319022432a23fc5344831?s=64&amp;d=identicon&amp;r=PG&amp;f=1" alt="" width="32" height="32" class="bar-sm"></div></a>
+    #         </div>
+    #         <div class="user-details" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+    #             <a href="/users/4094231/umair-ayub">Umair Ayub</a><span class="d-none" itemprop="name">Umair Ayub</span>
+    #             <div class="-flair">
+    #                 <span class="reputation-score" title="reputation score 14,591" dir="ltr">14.6k</span><span title="12 gold badges" aria-hidden="true"><span class="badge1"></span><span class="badgecount">12</span></span><span class="v-visible-sr">12 gold badges</span><span title="61 silver badges" aria-hidden="true"><span class="badge2"></span><span class="badgecount">61</span></span><span class="v-visible-sr">61 silver badges</span><span title="131 bronze badges" aria-hidden="true"><span class="badge3"></span><span class="badgecount">131</span></span><span class="v-visible-sr">131 bronze badges</span>
+    #             </div>
+    #         </div>
+    #     </div>
+    #     </div>
+    # """
+    # sypter = Sypter(html)
+    # print(sypter.if_exists_by_class("user-info", number=1))
+
+    # Test 3
+    # Test file as source
+
+
+    # Test 4
+    print(Sypter("""<div id="user"><p custom="user-class" style="color:red">This is user paragraph</p></div>""")\
+        .check_attribute_value_by_css("#user p", custom="user-class"))
