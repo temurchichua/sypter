@@ -1,4 +1,3 @@
-from __future__ import annotations
 from selenium import webdriver
 from selenium.common import NoSuchElementException
 from selenium.webdriver.common.keys import Keys
@@ -21,7 +20,7 @@ class Sypter:
         - url
         - local_file HTML
         """
-
+        self.source = source
         geckodriver_autoinstaller.install()
         # Check if the current version of geckodriver exists
         # and if it doesn't exist, download it automatically,
@@ -32,7 +31,7 @@ class Sypter:
         self._driver = webdriver.Firefox(options=firefox_options)
         self._driver.implicitly_wait(10)
 
-        self.source_type = self._get_source_type(source)
+        self.source_type = self._get_source_type()
         if self.source_type == "url":
             self._driver.get(source)
         elif self.source_type == "file":
@@ -42,9 +41,10 @@ class Sypter:
 
 
     # შეიძლება ამის ცალკე გატანაც
-    def _get_source_type(self, source):
+    def _get_source_type(self):
         import re
-        source = source.strip()
+
+        source = self.source.strip()
         url_regex = re.compile(
             r'^(?:http|ftp)s?://'  # http:// or https://
             # domain...
@@ -56,13 +56,16 @@ class Sypter:
         if re.match(url_regex, source):
             return 'url'
         else:
+            # Check if string is HTML
+            if source.startswith('<') and source.endswith('>'):
+                return "html"
             # Check if string is local file
             import os
-            if os.path.isfile(source):
+            # check if file exists
+            if not os.path.exists(source):
+                raise ValueError("File does not exist")
+            elif os.path.isfile(source):
                 return "file"
-            # Check if string is HTML
-            elif source.startswith('<') and source.endswith('>'):
-                return "html"
             else:
                 raise ValueError("Invalid source")
 
