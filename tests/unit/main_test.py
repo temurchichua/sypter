@@ -1,4 +1,4 @@
-from manage import *
+from src import Sypter
 
 
 def test_source_type_url():

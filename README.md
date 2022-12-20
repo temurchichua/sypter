@@ -20,7 +20,7 @@
 <br />
 <div align="center">
   <a href="https://github.com/temurchichua/sypter">
-    <img src="sypter/resources/images/logo.png" alt="Logo" width="250" height="250">
+    <img src="resources/images/logo.png" alt="Logo" width="250" height="250">
   </a>
 
   <h3 align="center">SypteR</h3>
