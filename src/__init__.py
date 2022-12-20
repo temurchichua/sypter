@@ -1,7 +1,6 @@
 from selenium import webdriver
 from selenium.common import NoSuchElementException
 from selenium.webdriver.common.by import By
-from selenium.webdriver.firefox.options import Options
 import geckodriver_autoinstaller
 
 
@@ -20,15 +19,28 @@ class Sypter:
         - local_file HTML
         """
         self.source = source
-        geckodriver_autoinstaller.install()
         # Check if the current version of geckodriver exists
         # and if it doesn't exist, download it automatically,
         # then add geckodriver to path
+        geckodriver_autoinstaller.install()
 
-        firefox_options = Options()
-        firefox_options.add_argument("--headless")
-        self._driver = webdriver.Firefox(options=firefox_options)
-        self._driver.implicitly_wait(10)
+        # Try to get firefox driver
+        # if not installed try chrome driver
+        try:
+            from selenium.webdriver.firefox.options import Options
+
+            firefox_options = Options()
+            firefox_options.add_argument("--headless")
+            self._driver = webdriver.Firefox(options=firefox_options)
+            self._driver.implicitly_wait(10)
+        except Exception:
+            from selenium.webdriver.chrome.options import Options
+
+            chrome_options = Options()
+            chrome_options.add_argument("--headless")
+            self._driver = webdriver.Chrome(options=chrome_options)
+            self._driver.implicitly_wait(10)
+
 
         self.source_type = self._get_source_type()
         if self.source_type == "url":
