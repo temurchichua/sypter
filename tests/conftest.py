@@ -1,7 +1,8 @@
 import pytest
+from src import Sypter
+
 
 # create a fixture for the Sypter class
 @pytest.fixture
 def sypter():
-    from sypter.main import Sypter
-    return Sypter
+    return Sypter()

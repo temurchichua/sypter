@@ -1,4 +1,7 @@
+import os
+
 import logging
+from fnmatch import fnmatch
 
 from selenium import webdriver
 from selenium.common import NoSuchElementException
@@ -90,100 +93,133 @@ class Sypter:
             r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # ...or ip
             r'(?::\d+)?'  # optional port
             r'(?:/?|[/?]\S+)$', re.IGNORECASE)
+        # Check if source is url
         if re.match(url_regex, source):
-            self.source_type =  'url'
-        else:
-            # Check if string is HTML
-            if source.startswith('<') and source.endswith('>'):
-                self.source_type =  "html"
-            # Check if string is local file
-            import os
+            self.source_type = 'url'
+        # else if source is a string containing html
+        elif source.startswith('<') and source.endswith('>'):
+            self.source_type = 'html'
+        # else if source is a file
+        elif os.path.isfile(source):
             # check if file exists
             if not os.path.exists(source):
                 raise ValueError("File does not exist")
             elif os.path.isfile(source):
-                self.source_type =  "file"
+                self.source_type = "file"
             else:
                 raise ValueError("Invalid source")
 
-    def if_exists_by_css(self, css_selector) -> bool:
+    @staticmethod
+    def check_elements_quantity(elements, comparison_operator: str, numeric_value) -> bool:
         """
-        Check if element exists by css selector
+        Check if elements quantity is valid
+        :param elements: elements to check
+        :param comparison_operator: comparison operator "<", ">", "<=", ">=", "==", "!="
+        :param numeric_value: numeric value to compare with (second operand)
+        :return:
         """
-        try:
-            self._driver.find_element(By.CSS_SELECTOR, css_selector)
-            return True
-        except NoSuchElementException:
-            return False
+        number_of_elements = len(elements)  # first operand
 
-    def if_exists_by_id(self, element_id: str) -> bool:
+        # write switch cases
+        match comparison_operator:
+            case "<":
+                return number_of_elements < numeric_value
+            case ">":
+                return number_of_elements > numeric_value
+            case "<=":
+                return number_of_elements <= numeric_value
+            case ">=":
+                return number_of_elements >= numeric_value
+            case "==":
+                return number_of_elements == numeric_value
+            case "!=":
+                return number_of_elements != numeric_value
+            case _:
+                raise ValueError("Invalid comparison operator")
+
+    @staticmethod
+    def get_selector(selector_type: str, selector_value: str) -> tuple:
         """
-        check if html element has given id
+        Get selector type and selector value
         """
-        try:
-            self._driver.find_element(By.ID, element_id)
-            return True
-        except NoSuchElementException:
-            return False
-
-    def if_exists_by_class(self, class_name, number=1, min_num=None, max_num=None) -> bool:
-        """
-        check existence of class in HTML element
-        """
-        minimum, maximum, class_count = False, False, False
-        try:
-            elements = self._driver.find_elements(By.CLASS_NAME, class_name)
-        except NoSuchElementException:
-            return False
-
-        if elements:
-            count = len(elements)
-            if min_num:
-                minimum = min_num <= count
-            if max_num:
-                maximum = max_num >= count
-            if number:
-                class_count = number == count
-
-        if minimum and maximum and class_count:
-            return True
-        elif min_num and max_num:
-            return minimum and maximum
-        elif min_num and number > 1:
-            return minimum and class_count
-        elif max_num and number > 1:
-            return maximum and class_count
-        elif min_num:
-            return minimum
-        elif max_num:
-            return maximum
-        elif number:
-            return class_count
-
-    def check_attribute_value_by_css(self, css_selector, **attributes) -> bool:
-        """
-        Check if attribute value is equal to given value
-        """
-
-        # if element does not exist, it will raise exception
-        element = self._driver.find_element(By.CSS_SELECTOR, css_selector)
-
-        for attribute, value in attributes.items():
-            if element.get_attribute(attribute) != value:
-                return False
-        return True
-
-    def check_if_attribute_exists_by_css(self, css_selector, attribute_name: str | tuple) -> bool:
-        element = self._driver.find_element(By.CSS_SELECTOR, css_selector)
-        if isinstance(attribute_name, tuple):
-            for attr in attribute_name:
-                if not element.get_attribute(attr):
-                    return False
+        selector_type = selector_type.lower()
+        if selector_type == "id":
+            return By.ID, selector_value
+        elif selector_type == "class":
+            return By.CLASS_NAME, selector_value
+        elif selector_type == "tag":
+            return By.TAG_NAME, selector_value
+        elif selector_type == "css":
+            return By.CSS_SELECTOR, selector_value
+        elif selector_type == "xpath":
+            return By.XPATH, selector_value
         else:
-            if not element.get_attribute(attribute_name):
-                return False
-        return True
+            raise ValueError("Invalid selector type")
+
+    def test(self, selector_value: str, selector_type: str = "tag",
+             comparison_operator: str = "==", numeric_value: int = 1,
+             style_tests: list = None, attribute_tests: list = None) -> list:
+        """
+        Test HTML element
+        """
+
+        # get selector
+        selector = self.get_selector(selector_type, selector_value)
+
+        # get elements
+        try:
+            elements = self._driver.find_elements(*selector)
+        except Exception:
+            raise False
+
+        # check if attributes need to be filtered
+        if attribute_tests is not None:
+            if isinstance(attribute_tests, list) and attribute_tests[0].get("attribute_name"):
+                attribute_tests = {attribute_test["attribute_name"]: attribute_test["attribute_value"]
+                                   for attribute_test in attribute_tests}
+
+            elements = self.filter_elements_by_attributes(elements, attribute_tests)
+
+        # check if styles need to be filtered
+        if style_tests is not None:
+            if isinstance(attribute_tests, list) and style_tests[0].get("attribute_name"):
+                style_tests = {style_test["attribute_name"]: style_test["attribute_name"] for style_test in style_tests}
+            elements = self.filter_elements_by_style(elements, style_tests)
+
+        return self.check_elements_quantity(elements, comparison_operator, numeric_value)
+
+    @staticmethod
+    def filter_elements_by_attributes(elements, attributes: dict) -> list:
+        """
+        Check if there are elements with given css selector and attributes
+        """
+        # filter list of elements to get only elements with given attributes
+        for attribute, value in attributes.items():
+            elements = [element for element in elements
+                        if element.get_attribute(attribute) and fnmatch(element.get_attribute(attribute), value)]
+
+        return elements
+
+    @staticmethod
+    def filter_elements_by_style(elements, styles: dict) -> list:
+        """
+        Filter elements by css style attribute
+
+        :param styles: dictionary of styles to filter by
+        :param elements: list of elements to filter
+        :return: list of elements
+        """
+        # filter list of elements to get only elements with given styles
+        for style, value in styles.items():
+            elements = [element for element in elements if fnmatch(element.value_of_css_property(style), value)]
+
+        return elements
 
 
 if __name__ == "__main__":
-    pass
+    sypter = Sypter("<html><body><h1>Hello World</h1></body></html>")
+    # print source type
+    print(sypter.source_type)
+    print(sypter.test("h1", comparison_operator="==", numeric_value=1))
+    sypter.process_source('<div id="id01" class="this-is-class" custom="Custom Attr">some text</div>')
+    print(sypter.test("id01", "id", attribute_tests={'custom': 'Custom Attr'}))
