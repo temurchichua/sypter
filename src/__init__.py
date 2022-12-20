@@ -1,3 +1,5 @@
+import logging
+
 from selenium import webdriver
 from selenium.common import NoSuchElementException
 from selenium.webdriver.common.by import By
@@ -11,14 +13,29 @@ class Sypter:
     It wraps selenium and adds testing functionalities
     """
 
-    def __init__(self, source):
+    def __init__(self, source=None):
         """
         source could be one of three:
         - string HTML
         - url
         - local_file HTML
         """
+        self._driver = None
         self.source = source
+        self.source_type = None
+
+        self.config_driver()
+
+        if source is not None:
+            self.process_source(source)
+
+        else:
+            logging.warning("Initiated Sypter without source. Please use process_source() to process source later")
+
+    def config_driver(self, **kwargs):
+        """
+        Configure driver
+        """
         # Check if the current version of geckodriver exists
         # and if it doesn't exist, download it automatically,
         # then add geckodriver to path
@@ -41,8 +58,16 @@ class Sypter:
             self._driver = webdriver.Chrome(options=chrome_options)
             self._driver.implicitly_wait(10)
 
+        for key, value in kwargs.items():
+            self._driver.__setattr__(key, value)
 
-        self.source_type = self._get_source_type()
+    def process_source(self, source):
+        """
+        Process source and return source type
+        """
+        self.source = source
+        self._get_source_type()
+
         if self.source_type == "url":
             self._driver.get(source)
         elif self.source_type == "file":
@@ -50,7 +75,6 @@ class Sypter:
         elif self.source_type == "html":
             self._driver.get(f"data:text/html;charset=utf-8,{source}")
 
-    # it may be externalized
     def _get_source_type(self):
         """
         Check if source is url, file or html
@@ -67,18 +91,18 @@ class Sypter:
             r'(?::\d+)?'  # optional port
             r'(?:/?|[/?]\S+)$', re.IGNORECASE)
         if re.match(url_regex, source):
-            return 'url'
+            self.source_type =  'url'
         else:
             # Check if string is HTML
             if source.startswith('<') and source.endswith('>'):
-                return "html"
+                self.source_type =  "html"
             # Check if string is local file
             import os
             # check if file exists
             if not os.path.exists(source):
                 raise ValueError("File does not exist")
             elif os.path.isfile(source):
-                return "file"
+                self.source_type =  "file"
             else:
                 raise ValueError("Invalid source")
 
