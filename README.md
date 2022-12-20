@@ -20,7 +20,7 @@
 <br />
 <div align="center">
   <a href="https://github.com/temurchichua/sypter">
-    <img src="resources/images/logo.png" alt="Logo" width="250" height="250">
+    <img src="sypter/resources/images/logo.png" alt="Logo" width="250" height="250">
   </a>
 
   <h3 align="center">SypteR</h3>
@@ -77,6 +77,13 @@ To get a local copy up and running follow these simple example steps.
 * You need to have [Python](https://www.python.org/downloads/) installed on your machine. Please check the supported versions in build section.
 
 ### Installation
+
+#### For Usage
+You can use Pip to install the package from git with following command:
+
+```sh
+pip install git+https://github.com/temurchichua/sypter.git
+```
 
 
 #### For local development
