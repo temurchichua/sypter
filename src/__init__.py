@@ -39,26 +39,27 @@ class Sypter:
         """
         Configure driver
         """
-        # Check if the current version of geckodriver exists
-        # and if it doesn't exist, download it automatically,
-        # then add geckodriver to path
-        geckodriver_autoinstaller.install()
-
-        # Try to get firefox driver
-        # if not installed try chrome driver
+        # Try to get Chrome driver
         try:
-            from selenium.webdriver.firefox.options import Options
-
-            firefox_options = Options()
-            firefox_options.add_argument("--headless")
-            self._driver = webdriver.Firefox(options=firefox_options)
-            self._driver.implicitly_wait(10)
-        except Exception:
             from selenium.webdriver.chrome.options import Options
 
             chrome_options = Options()
             chrome_options.add_argument("--headless")
             self._driver = webdriver.Chrome(options=chrome_options)
+            self._driver.implicitly_wait(10)
+        # if not installed try Firefox driver
+        except Exception:
+            # Check if the current version of geckodriver exists
+            # and if it doesn't exist, download it automatically,
+            # then add geckodriver to path
+            # TODO: this should be done one time when the package is installed
+            geckodriver_autoinstaller.install()
+
+            from selenium.webdriver.firefox.options import Options
+
+            firefox_options = Options()
+            firefox_options.add_argument("--headless")
+            self._driver = webdriver.Firefox(options=firefox_options)
             self._driver.implicitly_wait(10)
 
         for key, value in kwargs.items():
