@@ -1,5 +1,5 @@
 import pytest
-from src import Sypter
+from src.sypter import Sypter
 
 
 # create a fixture for the Sypter class
