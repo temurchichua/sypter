@@ -78,6 +78,13 @@ To get a local copy up and running follow these simple example steps.
 
 ### Installation
 
+#### For Usage
+You can use Pip to install the package from git with following command:
+
+```sh
+pip install git+https://github.com/temurchichua/sypter.git
+```
+
 
 #### For local development
 

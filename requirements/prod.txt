@@ -1,1 +1,3 @@
 # Everything needed in production
+selenium
+geckodriver_autoinstaller
