@@ -15,6 +15,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
+    'Thumbnail URL: https://raw.githubusercontent.com/temurchichua/sypter/master/resources/images/logo.png'
 ]
 keywords = ["frontend", "testing", "freamwork"]
 dependencies = [
