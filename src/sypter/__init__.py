@@ -8,6 +8,10 @@ from selenium.common import NoSuchElementException
 from selenium.webdriver.common.by import By
 import geckodriver_autoinstaller
 
+# TODO: import version from pyproject.toml
+__version__ = "0.0.1"
+
+logging.basicConfig(level=logging.INFO)
 
 class Sypter:
     """
@@ -170,7 +174,7 @@ class Sypter:
         # get elements
         try:
             elements = self._driver.find_elements(*selector)
-        except Exception:
+        except NoSuchElementException:
             raise False
 
         # check if attributes need to be filtered
@@ -215,12 +219,3 @@ class Sypter:
             elements = [element for element in elements if fnmatch(element.value_of_css_property(style), value)]
 
         return elements
-
-
-if __name__ == "__main__":
-    sypter = Sypter("<html><body><h1>Hello World</h1></body></html>")
-    # print source type
-    print(sypter.source_type)
-    print(sypter.test("h1", comparison_operator="==", numeric_value=1))
-    sypter.process_source('<div id="id01" class="this-is-class" custom="Custom Attr">some text</div>')
-    print(sypter.test("id01", "id", attribute_tests={'custom': 'Custom Attr'}))
