@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sypter"
-version = "0.0.1"
+version = "0.0.2"
 description = "Frontend testing framework"
 readme = "README.md"
 authors = [{ name = "Temur Chichua", email = "contact@temurchichua.me" }]
