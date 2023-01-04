@@ -13,6 +13,7 @@ __version__ = "0.0.2"
 
 logging.basicConfig(level=logging.INFO)
 
+
 class Sypter:
     """
     This is the base class for Frontend Testing Framework the Sypter
@@ -115,16 +116,18 @@ class Sypter:
                 raise ValueError("Invalid source")
 
     @staticmethod
-    def check_elements_quantity(elements, comparison_operator: str, numeric_value) -> bool:
+    def check_elements_quantity(elements, comparison_operator: str, numeric_value: int, verbose: bool = False) -> bool:
         """
         Check if elements quantity is valid
         :param elements: elements to check
         :param comparison_operator: comparison operator "<", ">", "<=", ">=", "==", "!="
         :param numeric_value: numeric value to compare with (second operand)
+        :param verbose: if True, print the result
         :return:
         """
         number_of_elements = len(elements)  # first operand
-
+        if verbose:
+            print(f"comparing {number_of_elements} {comparison_operator} {numeric_value}")
         # write switch cases
         match comparison_operator:
             case "<":
@@ -143,11 +146,13 @@ class Sypter:
                 raise ValueError("Invalid comparison operator")
 
     @staticmethod
-    def get_selector(selector_type: str, selector_value: str) -> tuple:
+    def get_selector(selector_type: str, selector_value: str, verbose: bool = False) -> tuple:
         """
         Get selector type and selector value
         """
         selector_type = selector_type.lower()
+        if verbose:
+            print(f"selector_type: {selector_type} selector_value: {selector_value}")
         if selector_type == "id":
             return By.ID, selector_value
         elif selector_type == "class":
@@ -163,19 +168,26 @@ class Sypter:
 
     def test(self, selector_value: str, selector_type: str = "tag",
              comparison_operator: str = "==", numeric_value: int = 1,
-             style_tests: list = None, attribute_tests: list = None) -> list:
+             style_tests: list = None, attribute_tests: list = None,
+             verbose=False) -> list:
         """
         Test HTML element
         """
 
         # get selector
-        selector = self.get_selector(selector_type, selector_value)
+        selector = self.get_selector(selector_type, selector_value, verbose)
+
+        if verbose:
+            print(f"selector: {selector}")
 
         # get elements
         try:
             elements = self._driver.find_elements(*selector)
         except NoSuchElementException:
             raise False
+
+        if verbose:
+            print(f"Found {len(elements)} elements: {elements}")
 
         # check if attributes need to be filtered
         if attribute_tests is not None:
@@ -188,10 +200,11 @@ class Sypter:
         # check if styles need to be filtered
         if style_tests is not None:
             if isinstance(style_tests, list) and style_tests[0].get("attribute_name"):
-                style_tests = {style_test["attribute_name"]: style_test["attribute_name"] for style_test in style_tests}
+                style_tests = {style_test["attribute_name"]: style_test["attribute_value"] for style_test in
+                               style_tests}
             elements = self.filter_elements_by_style(elements, style_tests)
 
-        return self.check_elements_quantity(elements, comparison_operator, numeric_value)
+        return self.check_elements_quantity(elements, comparison_operator, numeric_value, verbose)
 
     @staticmethod
     def filter_elements_by_attributes(elements, attributes: dict) -> list:
