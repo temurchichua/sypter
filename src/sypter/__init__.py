@@ -187,7 +187,7 @@ class Sypter:
 
         # check if styles need to be filtered
         if style_tests is not None:
-            if isinstance(attribute_tests, list) and style_tests[0].get("attribute_name"):
+            if isinstance(style_tests, list) and style_tests[0].get("attribute_name"):
                 style_tests = {style_test["attribute_name"]: style_test["attribute_name"] for style_test in style_tests}
             elements = self.filter_elements_by_style(elements, style_tests)
 
